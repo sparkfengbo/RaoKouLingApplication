@@ -1,0 +1,53 @@
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="2dp"
+        android:layout_marginTop="10dp"
+        android:orientation="vertical" >
+
+
+    <include layout="@layout/item_entertainment"/>
+
+    <EditText
+            android:id="@+id/iat_text"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="top|left"
+            android:paddingBottom="20dp"
+            android:textSize="20sp" />
+
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="2dp"
+            android:layout_marginTop="10dp"
+            android:gravity="center_horizontal"
+            android:orientation="horizontal" >
+        <Button
+                android:id="@+id/iat_recognize"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="开始"
+                android:textSize="20sp" />
+
+        <Button
+                android:id="@+id/iat_stop"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="停止"
+                android:textSize="20sp" />
+
+        <Button
+                android:id="@+id/iat_cancel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="取消"
+                android:textSize="20sp" />
+    </LinearLayout>
+</LinearLayout>

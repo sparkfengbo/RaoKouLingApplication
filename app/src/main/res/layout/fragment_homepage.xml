@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.raokouling.sparkfengbo.raokoulingapplication.widget.ScrollChildSwipeRefreshLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/scrollLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
+    <ListView
+            android:id="@+id/lvEntertainmentObject"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:divider="@color/colorWhite"
+            android:dividerHeight="@dimen/entertainment_deivider_height"></ListView>
+
+
+    <TextView
+            android:id="@+id/tvNoData"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:text="@string/hint_no_data" />
+
+</com.raokouling.sparkfengbo.raokoulingapplication.widget.ScrollChildSwipeRefreshLayout>

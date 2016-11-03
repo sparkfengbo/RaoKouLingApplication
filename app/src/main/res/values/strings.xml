@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">一起绕口令</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="hint_no_data">啊哦~还没有数据呢~</string>
+    <!-- 听写 -->
+    <string name="text_begin">请开始说话…</string>
+</resources>
