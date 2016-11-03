@@ -2,11 +2,13 @@ package com.raokouling.sparkfengbo.raokoulingapplication.func.detail;
 
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.nfc.Tag;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.Fragment;
+import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,6 +19,8 @@ import android.widget.Toast;
 
 import com.iflytek.cloud.ErrorCode;
 import com.iflytek.cloud.InitListener;
+import com.iflytek.cloud.LexiconListener;
+import com.iflytek.cloud.RecognizerListener;
 import com.iflytek.cloud.RecognizerResult;
 import com.iflytek.cloud.SpeechConstant;
 import com.iflytek.cloud.SpeechError;
@@ -55,6 +59,9 @@ public class EntertainmentDetailFragment extends Fragment implements View.OnClic
 
     private String mContent;
 
+    private int ret = 0; // 函数调用返回值
+
+
     public static EntertainmentDetailFragment newInstance(String content) {
         EntertainmentDetailFragment fragment = new EntertainmentDetailFragment();
         Bundle args = new Bundle();
@@ -80,6 +87,14 @@ public class EntertainmentDetailFragment extends Fragment implements View.OnClic
 
         //本地听写需要安装语记
         mEngineType = SpeechConstant.TYPE_CLOUD;
+
+
+        // 指定引擎类型
+        mIat.setParameter(SpeechConstant.ENGINE_TYPE, SpeechConstant.TYPE_CLOUD);
+        mIat.setParameter(SpeechConstant.TEXT_ENCODING, "utf-8");
+        ret = mIat.updateLexicon("userword", mContent, mLexiconListener);
+        if (ret != ErrorCode.SUCCESS)
+            showTip("上传热词失败,错误码：" + ret);
     }
 
     @Override
@@ -94,7 +109,7 @@ public class EntertainmentDetailFragment extends Fragment implements View.OnClic
 
         mResultText = ((EditText) root.findViewById(R.id.iat_text));
         mConentTextView = (TextView) root.findViewById(R.id.tvItemContent);
-        mConentTextView.setText(mContent);
+        mConentTextView.setText(Html.fromHtml(mContent));
 
         return root;
     }
@@ -169,9 +184,13 @@ public class EntertainmentDetailFragment extends Fragment implements View.OnClic
                 // 设置参数
                 setParam();
                 // 显示听写对话框
-                mIatDialog.setListener(mRecognizerDialogListener);
-                mIatDialog.show();
-                showTip(getString(R.string.text_begin));
+                // 不显示听写对话框
+                ret = mIat.startListening(mRecognizerListener);
+                if (ret != ErrorCode.SUCCESS) {
+                    showTip("听写失败,错误码：" + ret);
+                } else {
+                    showTip(getString(R.string.text_begin));
+                }
                 break;
             // 停止听写
             case R.id.iat_stop:
@@ -206,18 +225,6 @@ public class EntertainmentDetailFragment extends Fragment implements View.OnClic
         // 设置返回结果格式
         mIat.setParameter(SpeechConstant.RESULT_TYPE, "json");
 
-//        String lag = mSharedPreferences.getString("iat_language_preference",
-//                "mandarin");
-//        if (lag.equals("en_us")) {
-//            // 设置语言
-//            mIat.setParameter(SpeechConstant.LANGUAGE, "en_us");
-//        } else {
-//            // 设置语言
-//            mIat.setParameter(SpeechConstant.LANGUAGE, "zh_cn");
-//            // 设置语言区域
-//            mIat.setParameter(SpeechConstant.ACCENT, lag);
-//        }
-
         // 设置语言
         mIat.setParameter(SpeechConstant.LANGUAGE, "zh_cn");
         // 设置语言区域
@@ -230,17 +237,20 @@ public class EntertainmentDetailFragment extends Fragment implements View.OnClic
         mIat.setParameter(SpeechConstant.VAD_EOS, "1000");
 
         // 设置标点符号,设置为"0"返回结果无标点,设置为"1"返回结果有标点
-        mIat.setParameter(SpeechConstant.ASR_PTT, "0");
+        mIat.setParameter(SpeechConstant.ASR_PTT, "1");
 
         // 设置音频保存路径，保存音频格式支持pcm、wav，设置路径为sd卡请注意WRITE_EXTERNAL_STORAGE权限
         // 注：AUDIO_FORMAT参数语记需要更新版本才能生效
-        mIat.setParameter(SpeechConstant.AUDIO_FORMAT,"wav");
+        mIat.setParameter(SpeechConstant.AUDIO_FORMAT,"pcm");
 
 
         if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)){
             //执行存储sdcard方法
-            String filePath = Environment.getExternalStorageDirectory()
-                    + File.separator + "绕口令" + File.separator + "msc";
+//            String filePath = Environment.getExternalStorageDirectory()
+//                    + File.separator + "raokouling" + File.separator + "msc";
+
+            String filePath = "data" + File.separator + "data" + File.separator +
+                    EntertainmentDetailFragment.this.getContext().getPackageName() + File.separator + "msc";
             File folder = new File(filePath);
             if(!folder.exists()){
                 folder.mkdirs();
@@ -252,7 +262,7 @@ public class EntertainmentDetailFragment extends Fragment implements View.OnClic
                 Log.d(TAG, "folder fail");
             }
 
-            File file = new File(filePath, "iat.wav");
+            File file = new File(filePath, "iat.pcm");
             if(!file.exists()){
                 try {
                     file.createNewFile();
@@ -260,6 +270,7 @@ public class EntertainmentDetailFragment extends Fragment implements View.OnClic
                     e.printStackTrace();
                 }
             }
+
             if(file.exists()){
                 Log.d(TAG, "file already exits");
             } else {
@@ -267,14 +278,79 @@ public class EntertainmentDetailFragment extends Fragment implements View.OnClic
             }
             mIat.setParameter(SpeechConstant.ASR_AUDIO_PATH, file.getAbsolutePath());
 
+            AudioManager am = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
+            am.requestAudioFocus(new AudioManager.OnAudioFocusChangeListener() {
+                @Override
+                public void onAudioFocusChange(int focusChange) {
+
+                }
+            }, AudioManager.USE_DEFAULT_STREAM_TYPE ,AudioManager.AUDIOFOCUS_GAIN);
         }
-        else{
-            //存储到手机中，或提示
-        }
-
-
-
-
     }
+
+    /**
+     * 听写监听器。
+     */
+    private RecognizerListener mRecognizerListener = new RecognizerListener() {
+
+        @Override
+        public void onBeginOfSpeech() {
+            // 此回调表示：sdk内部录音机已经准备好了，用户可以开始语音输入
+            showTip("开始说话");
+        }
+
+        @Override
+        public void onError(SpeechError error) {
+            // Tips：
+            // 错误码：10118(您没有说话)，可能是录音机权限被禁，需要提示用户打开应用的录音权限。
+            // 如果使用本地功能（语记）需要提示用户开启语记的录音权限。
+            showTip(error.getPlainDescription(true));
+        }
+
+        @Override
+        public void onEndOfSpeech() {
+            // 此回调表示：检测到了语音的尾端点，已经进入识别过程，不再接受语音输入
+            showTip("结束说话");
+        }
+
+        @Override
+        public void onResult(RecognizerResult results, boolean isLast) {
+            Log.d(TAG, results.getResultString());
+            printResult(results);
+
+            if (isLast) {
+                // TODO 最后的结果
+            }
+        }
+
+        @Override
+        public void onVolumeChanged(int volume, byte[] data) {
+            showTip("当前正在说话，音量大小：" + volume);
+            Log.d(TAG, "返回音频数据："+data.length);
+        }
+
+        @Override
+        public void onEvent(int eventType, int arg1, int arg2, Bundle obj) {
+            // 以下代码用于获取与云端的会话id，当业务出错时将会话id提供给技术支持人员，可用于查询会话日志，定位出错原因
+            // 若使用本地能力，会话id为null
+            //	if (SpeechEvent.EVENT_SESSION_ID == eventType) {
+            //		String sid = obj.getString(SpeechEvent.KEY_EVENT_SESSION_ID);
+            //		Log.d(TAG, "session id =" + sid);
+            //	}
+        }
+    };
+
+    private LexiconListener mLexiconListener = new LexiconListener() {
+
+        @Override
+        public void onLexiconUpdated(String lexiconId, SpeechError error) {
+            if (error != null) {
+                showTip(error.toString());
+            } else {
+                showTip(getString(R.string.text_upload_success));
+            }
+        }
+    };
+
 
 }

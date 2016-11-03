@@ -5,4 +5,6 @@
     <string name="hint_no_data">啊哦~还没有数据呢~</string>
     <!-- 听写 -->
     <string name="text_begin">请开始说话…</string>
+    <string name="text_upload_success">上传成功</string>
+
 </resources>
